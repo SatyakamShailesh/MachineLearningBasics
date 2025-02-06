@@ -47,6 +47,10 @@ if uploaded_file is not None:
     st.write("Select the columns to use for clustering:")
     selected_columns = st.multiselect("Select columns", columns)
 
+    # Ask the user to select the column for the x axis (e.g., 'created_at')
+    st.write("Select the column to compare the clusters over given range:")
+    time_column = st.selectbox("Select time column", columns)
+
     submit_button = st.button(label="Submit")
 
     if selected_columns and submit_button:
@@ -83,10 +87,11 @@ if uploaded_file is not None:
         st.write(df['Cluster Name'].value_counts())
 
         # Show a plot of the count of each cluster over time
-        df['created_at'] = pd.to_datetime(df['created_at'])
+        #df['created_at'] = pd.to_datetime(df['created_at'])
+        df[time_column] = pd.to_datetime(df[time_column])
 
         # Show a bar plot of the count of each cluster over created_at
-        df.groupby(['created_at', 'Cluster Name']).size().unstack().plot(kind='bar', stacked=True)
+        df.groupby([time_column, 'Cluster Name']).size().unstack().plot(kind='bar', stacked=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
         st.pyplot()
 
