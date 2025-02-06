@@ -8,11 +8,21 @@ from sklearn.decomposition import TruncatedSVD
 import matplotlib.pyplot as plt
 import streamlit as st
 import base64
+#from transformers import pipeline
 
-st.title("Error Clustering Application")
+st.title("Data Clustering Application")
 st.write("Upload your Excel file to categorize and cluster errors.")
 
 uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+
+def generate_cluster_name(df, cluster, selected_columns):
+    
+    cluster_data = df[df['Cluster'] == cluster]
+    
+    # Just take the first row of the cluster and the content of first selected column in that row
+    cluster_name = cluster_data[selected_columns[0]].iloc[0]
+    return cluster_name
+
 
 def get_table_download_link(df):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
@@ -60,15 +70,23 @@ if uploaded_file is not None:
         # Fit the model and predict clusters
         df['Cluster'] = pipeline.fit_predict(df[selected_columns])
 
+        # Generate human-readable names for each cluster
+        cluster_names = {}
+        for cluster in df['Cluster'].unique():
+            cluster_names[cluster] = generate_cluster_name(df, cluster, selected_columns)
+        
+        # Map the cluster names to the dataset
+        df['Cluster Name'] = df['Cluster'].map(cluster_names)
+
         # Print count of each cluster
         st.write("Count of each cluster:")
-        st.write(df['Cluster'].value_counts())
+        st.write(df['Cluster Name'].value_counts())
 
         # Show a plot of the count of each cluster over time
         df['created_at'] = pd.to_datetime(df['created_at'])
 
         # Show a bar plot of the count of each cluster over created_at
-        df.groupby(['created_at', 'Cluster']).size().unstack().plot(kind='bar', stacked=True)
+        df.groupby(['created_at', 'Cluster Name']).size().unstack().plot(kind='bar', stacked=True)
         st.set_option('deprecation.showPyplotGlobalUse', False)
         st.pyplot()
 
